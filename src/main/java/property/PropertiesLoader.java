@@ -1,9 +1,4 @@
 package property;
-
-import jdk.internal.util.xml.impl.Input;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;

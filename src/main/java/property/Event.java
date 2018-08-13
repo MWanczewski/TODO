@@ -1,5 +1,8 @@
 package property;
 
+import lombok.Data;
+
+@Data
 public class Event {
     private String eventName;
     private String eventDate;

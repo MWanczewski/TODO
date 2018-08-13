@@ -1,18 +1,17 @@
 package property;
 
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class EventTxtRepository implements EventRep{
-    private List<Event> Events= new ArrayList<>();
     private PropertiesLoader propertiesLoader;
     private EventParser eventParser = new EventParser();
     public EventTxtRepository(PropertiesLoader propertiesLoader) {
@@ -29,6 +28,7 @@ public class EventTxtRepository implements EventRep{
                         return eventParser.parseFromDatabase(s);
                     });
             return eventStream.collect(Collectors.toList());
+
         } catch (IOException e) {
             e.printStackTrace();
             return Collections.emptyList();
@@ -37,17 +37,40 @@ public class EventTxtRepository implements EventRep{
 
     @Override
     public Event getNextEvent() {
-        return null;
+        List<Event> events = getAllEventList();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(propertiesLoader.getInputDateFormat());
+        LocalDateTime localNow = LocalDateTime.now();
+        LocalDateTime nearestDate = LocalDateTime.parse(events.get(0).getEventDate(), formatter);
+        int indexOfNextEvent = 0;
+        for(int i = 0; i < events.size(); i++) {
+            LocalDateTime localDateTime = LocalDateTime.parse(events.get(i).getEventDate(), formatter);
+            if((localDateTime.isAfter(localNow)) && (localDateTime.isBefore(nearestDate))) {
+                nearestDate = localDateTime;
+                indexOfNextEvent = i;
+            } else if(nearestDate.isBefore(localNow)) {
+                indexOfNextEvent = -1;
+            }
+        }
+        return events.get(indexOfNextEvent);
     }
 
     @Override
     public void addEvent(Event event) {
-
+        try{
+            Path path = Paths.get(propertiesLoader.getEventPath());
+            String fileName = path.toString();
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(fileName, true));
+            bufferedWriter.newLine();
+            bufferedWriter.write(eventParser.parseToDatabase(event));
+            bufferedWriter.close();
+        } catch(IOException e) {
+            e.getMessage();
+        }
 
     }
 
     @Override
     public void save(Event event) {
-
+        addEvent(event);
     }
 }
